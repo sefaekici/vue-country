@@ -2,11 +2,23 @@
     <div class="container mt-5">
         <loader v-if="!isLoad"></loader>
         <div v-else class="container-fluid">
-             <div class="form-group mb-3">
-                <label for="exampleInputEmail1">Capital Filter:</label>
-                <input v-model="searchString" type="text" class="form-control" id="exampleInputEmail1">
-                <small id="emailHelp" class="form-text text-muted">Please write the capital you want to search</small>
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-group mb-3">
+                        <label for="exampleInputEmail1">Capital Filter:</label>
+                        <input v-model="searchString" type="text" class="form-control" id="exampleInputEmail1">
+                        <small id="emailHelp" class="form-text text-muted">Please write the capital you want to search</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group mb-3">
+                        <label for="exampleInputEmail1">General Filter:</label>
+                        <input v-model="generalFilterString" type="text" class="form-control" id="exampleInputEmail1">
+                        <small id="emailHelp" class="form-text text-muted">Please write the capital you want to search</small>
+                    </div>
+                </div>
             </div>
+             
             <table class="table" >
             <thead>
                 <tr>
@@ -41,7 +53,8 @@ export default {
         return{
             countryDatas:[],
             isLoad:false,
-            searchString:""
+            searchString:"",
+            generalFilterString:"",
         }
     },
     components:{
@@ -55,11 +68,19 @@ export default {
                 }
             }
        },
+       setUndefinedRegionalBlocks(){
+           for(let i=0;i<this.countryDatas.length;i++){
+               if(this.countryDatas[i].regionalBlocs==undefined){
+                   this.countryDatas[i].regionalBlocs=[];
+               }
+           }
+       },
        async getCountries(){
            try{
             let {data}=await axios.get("https://restcountries.com/v2/all");
             this.countryDatas=data;
             this.setUndefinedCapitals();
+            this.setUndefinedRegionalBlocks();
             this.isLoad=true;
            }catch(err){
             alert("Lütfen internet bağlantınızı kontrol ediniz!");
@@ -68,9 +89,25 @@ export default {
     },
     computed:{
        filteredDatas(){
-           return this.countryDatas.filter((country)=>{
-                    return country.capital.toLowerCase().includes(this.searchString.toLowerCase())
-           })
+               if(this.generalFilterString.length>0){
+                   return this.countryDatas.filter(el=>{
+                       if(el.capital.toLocaleLowerCase().includes(this.generalFilterString) || el.name.toLocaleLowerCase().includes(this.generalFilterString) || el.region.toLocaleLowerCase().includes(this.generalFilterString) || el.subregion.toLocaleLowerCase().includes(this.generalFilterString) || el.demonym.toLocaleLowerCase().includes(this.generalFilterString) ){
+                           return true;
+                       }
+                       else{
+                           return false;
+                       }
+                       
+                   });
+               }
+               else{
+                    return this.countryDatas.filter((country)=>{
+                        return country.capital.toLocaleLowerCase().includes(this.searchString.toLocaleLowerCase())
+                    })
+               }
+              
+           
+           
        }
     },
     async mounted(){
